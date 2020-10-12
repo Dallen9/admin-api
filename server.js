@@ -1,16 +1,19 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
+const cors = require('cors')
 
 dotenv.config({path: './config/config.env'});
 
 const app = express();
 
-//Coonect database
+//Conect database
 connectDB();
 
 //Init Middleware
 app.use(express.json());
+
+app.use(cors());
 
 //Define routes
 app.use('/api/users', require('./routes/users'));
