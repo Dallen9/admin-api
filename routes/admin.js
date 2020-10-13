@@ -11,7 +11,7 @@ const User = require('../models/User');
 //@access Private
 router.get('/', protect, authorize('super_admin'), async(req, res) => {
     try {
-        const user = await User.find({role: { $in: ['subscriber', 'author']}});
+        const user = await User.find({role: { $in: ['Subscriber', 'Author']}});
         res.status(200).json(user)
     } catch (e) {
         console.error(e.message);
