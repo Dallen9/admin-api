@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const moment = require('moment');
+const { schema } = require('./Post');
 
 const UserSchema = mongoose.Schema({
     username: {
@@ -27,10 +28,15 @@ const UserSchema = mongoose.Schema({
         enum: ['Subscriber', 'Author'],
         default: 'Subscriber'
     },
+    posts: [
+        {
+            type: mongoose.Schema.ObjectId, 
+            ref:'Post'
+        }
+],
     date: {
         type: String,
         default: moment().format('dddd, MMMM Do YYYY, h:mm:ss a')
     }
 });
-
 module.exports = mongoose.model('user', UserSchema)

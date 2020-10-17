@@ -4,26 +4,41 @@ const {check, validationResult} = require('express-validator');
 const {protect, authorize} = require('../middleware/auth');
 
 const Post = require('../models/Post');
+const User = require('../models/User');
 
-//@route GET api/posts
-//@desc Get all posts
+//@route GET api/post
+//@desc Get all post
 //@access Private
 router.get('/', protect, async(req, res) => {
     try {
-        const posts = await Post.find();
 
-        return res.status(200).json(posts)
+        let post = await Post.aggregate([
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'user',
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            },
+            {
+                $unwind: '$user'
+            }
+        ])
+
+        return res.status(200).json(post)
     } catch (e) {
         res.status(400).json({msg: 'Error loading posts'})
     }
 });
 
-//@route GET api/posts/:userId
+//@route GET api/users/:userId/posts
 //@desc Get all posts by user
 //@access Private
-router.get('/:userId', protect, async(req, res) => {
+router.get('/user/:id', protect, async(req, res) => {
+    req.body.user = req.params.id;
     try {
-        const posts = await Post.find({user: req.params.userId});
+        const posts = await User.findById(req.params.id);
 
         if(!posts) {
             res.status(400).json({msg: 'No post available'})
@@ -43,7 +58,7 @@ router.get('/:id', protect, async (req, res) => {
         const post = await Post.findById(req.params.id)
 
         if(!post) {
-            return res.status(400).json({msg: 'Vendor not found'})
+            return res.status(400).json({msg: 'Post not found'})
         }
 
         res.status(200).json(post)
@@ -56,7 +71,7 @@ router.get('/:id', protect, async (req, res) => {
 //@route POST api/posts
 //@desc Add new post
 //@access Private
-router.post('/', protect, authorize('author', 'super_admin'), 
+router.post('/', protect, authorize('Author', 'super_admin'), 
     [
         check('title', 'Title is required')
         .not()
@@ -67,21 +82,34 @@ router.post('/', protect, authorize('author', 'super_admin'),
     ],
 async (req, res, next) => {
     
-    //Add user to req.body
+    // //Add user to req.body
     req.body.user = req.user.id;
+    req.body.post = req.params.postId;
+    // //Check for existing created post
+    // const postExist = await Post.findOne({user: req.user.id})
 
-    //Check for existing created post
-    const postExist = await Post.findOne({user: req.user.id})
-
-    //If the user is not an admin, they can only add one post
-    if(postExist && req.user.role !== 'super_admin') {
-        return next(res.status(400).json({msg: 'This user has already created a post'}))
-    }
+    // //If the user is not an admin, they can only add one post
+    // if(postExist && req.user.role !== 'super_admin') {
+    //     return next(res.status(400).json({msg: 'This user has already created a post'}))
+    // }
 
     try { 
+    // const postExist = await Post.findOne({user: req.user.id})
+    
+    // if(postExist) {
+    //     const pop = await User.updateOne({
+    //         user: req.user.id
+    //     }, {
+    //         $push: {
+    //             posts: req.params.postId
+    //         }
+    //     });
+    //     res.status(200).json(pop)
+    // } else {
+        
+    // }
     const post = await Post.create(req.body)
-    console.log(post)
-    res.status(200).json({post})
+        res.status(201).json(post)
     } catch(err) {
         console.error(err.message);
         res.status(400).json({msg: 'Error adding post'})
@@ -91,7 +119,7 @@ async (req, res, next) => {
 //@route PUT api/posts
 //@desc Update post
 //@access Private
-router.put('/:id', protect, authorize('author', 'super_admin'), async (req, res) => {
+router.put('/:id', protect, authorize('Author', 'super_admin'), async (req, res) => {
     try {
         let post = await Post.findById(req.params.id);
 
@@ -115,28 +143,11 @@ router.put('/:id', protect, authorize('author', 'super_admin'), async (req, res)
         res.status(400).json({msg: 'Error updating post'})
     }
 });
-//@route POST /api/vendors/:userId/post
-//@desc Add review
-//@access Private
-router.post('/', protect, async (req, res) => {
-    req.body.vendor = req.params.vendorId;
-    req.body.user = req.user.id;
- 
-    const vendor = await Vendor.findById(req.params.vendorId);
- 
-    if(!vendor) {
-        return res.status(404).json({msg: 'Vendor not found'})
-    }
- 
-    const review = await Review.create(req.body);
- 
-     res.status(201).json(review)
- });
 
 //@route Delete api/posts
 //@desc Delete post
 //@access Private
-router.delete('/:id', protect, authorize('author', 'super_admin'), async (req, res) => {
+router.delete('/:id', protect, authorize('Author', 'super_admin'), async (req, res) => {
      try {
         const post = await Post.findById(req.params.id);
 
@@ -144,7 +155,7 @@ router.delete('/:id', protect, authorize('author', 'super_admin'), async (req, r
             return res.status(400).json({msg: 'Post not found'})
         }
 
-          //Make sure user is vendor owner
+          //Make sure user is post owner
           if(post.user.toString() !== req.user.id && req.user.role !== 'super_admin') {
             return res.status(400).json({msg: 'User is not authorized to delete current post'})
         }
