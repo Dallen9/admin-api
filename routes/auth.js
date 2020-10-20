@@ -66,7 +66,7 @@ async (req, res) => {
 //@route PUT api/auth/updateuser
 //@desc  Update user's account details
 //@access private
-router.put('/updateaccount', protect, async (req, res) => {
+router.put('/update-account/:id', protect, async (req, res) => {
 
     const fields = {
         username: req.body.username,

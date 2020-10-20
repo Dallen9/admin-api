@@ -21,7 +21,7 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/admin/:id', require('./routes/admin'));
 app.use('/api/admin/create-user', require('./routes/admin'));
 app.use('/api/auth', require('./routes/auth'));
-app.use('/api/auth/updateaccount', require('./routes/auth'));
+app.use('/api/auth/update-account/:id', require('./routes/auth'));
 app.use('/api/post', require('./routes/post'));
 app.use('/api/post/:id', require('./routes/post'));
 app.use('/api/post/user/:id', require('./routes/post'));

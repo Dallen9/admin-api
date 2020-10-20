@@ -53,15 +53,51 @@ router.get('/user/:id', protect, async(req, res) => {
 //@route GET api/posts/:id
 //@desc Get single post
 //@access Private
-router.get('/:id', protect, async (req, res) => {
+router.get('/:id', protect, async (req, res, next) => {
+    // req.body.user = req.params.id;
+
     try {
-        const post = await Post.findById(req.params.id)
+        const post = await Post.findById(req.params.id);
+        // let post = await Post.aggregate([
+         
+        //     {
+        //         $lookup: {
+        //             from: 'users',
+        //             localField: 'user',
+        //             foreignField: '_id',
+        //             as: 'user'
+        //         }
+        //     },
+        //     {
+        //         $unwind: '$user'
+        //     },
+        //     {
+        //         $match: {
+        //             id: req.params.id
+        //         }
+        //     },
+        //     {
+        //         $limit: 1
+        //     }
+        // ])
+            // {
+            //     $project: {
+            //        ' _id': 0,
+            //        'user._id': 0,
+            //         'user.title': 0,
+            //         'user.body': 0,
+            //     }
+            // },
+           
+            
+      
 
         if(!post) {
             return res.status(400).json({msg: 'Post not found'})
         }
 
         res.status(200).json(post)
+        next()
     } catch(err) {
         console.error(err.message)
         res.status(400).json({msg: 'Post not found'})
