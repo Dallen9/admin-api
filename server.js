@@ -25,9 +25,6 @@ app.use('/api/auth/update-account/:id', require('./routes/auth'));
 app.use('/api/post', require('./routes/post'));
 app.use('/api/post/user/:userId', require('./routes/post'));
 app.use('/api/post/:id', require('./routes/post'));
-app.use('/api/:userId/post', require('./routes/post'));
-app.use('/api/users/:userId/post', require('./routes/post'));
-
 
 const PORT = process.env.PORT || 4000;
 
