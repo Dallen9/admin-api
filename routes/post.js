@@ -35,10 +35,11 @@ router.get('/', protect, async(req, res) => {
 //@route GET api/users/:userId/posts
 //@desc Get all posts by user
 //@access Private
-router.get('/user/:id', protect, async(req, res) => {
-    req.body.user = req.params.id;
+router.get('/user/:userId', protect, async(req, res) => {
+        req.body.user = req.params.userId;
+
     try {
-        const posts = await User.findById(req.params.id);
+        const posts = await Post.find({user: req.params.userId})
 
         if(!posts) {
             res.status(400).json({msg: 'No post available'})
@@ -105,6 +106,7 @@ router.get('/:id', protect, async (req, res, next) => {
 });
 
 //@route POST api/posts
+//@route POST /api/users/:UserId/posts
 //@desc Add new post
 //@access Private
 router.post('/', protect, authorize('Author', 'super_admin'), 
@@ -121,29 +123,9 @@ async (req, res, next) => {
     // //Add user to req.body
     req.body.user = req.user.id;
     req.body.post = req.params.postId;
-    // //Check for existing created post
-    // const postExist = await Post.findOne({user: req.user.id})
-
-    // //If the user is not an admin, they can only add one post
-    // if(postExist && req.user.role !== 'super_admin') {
-    //     return next(res.status(400).json({msg: 'This user has already created a post'}))
-    // }
 
     try { 
-    // const postExist = await Post.findOne({user: req.user.id})
-    
-    // if(postExist) {
-    //     const pop = await User.updateOne({
-    //         user: req.user.id
-    //     }, {
-    //         $push: {
-    //             posts: req.params.postId
-    //         }
-    //     });
-    //     res.status(200).json(pop)
-    // } else {
-        
-    // }
+ 
     const post = await Post.create(req.body)
         res.status(201).json(post)
     } catch(err) {
