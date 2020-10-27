@@ -28,18 +28,19 @@ router.get('/', protect, async(req, res) => {
 
         return res.status(200).json(post)
     } catch (e) {
-        res.status(400).json({msg: 'Error loading posts'})
+        console.error(e.message)
+        return res.status(400).json({msg: 'Error loading posts'})
     }
 });
 
 //@route GET api/users/:userId/posts
 //@desc Get all posts by user
 //@access Private
-router.get('/user/:userId', protect, async(req, res) => {
-        req.body.user = req.params.userId;
+router.get('/user', protect, async(req, res) => {
+        // req.body.user = req.params.userId;
 
     try {
-        const posts = await Post.find({user: req.params.userId})
+        const posts = await Post.find({user: req.user.id})
 
         if(!posts) {
             res.status(400).json({msg: 'No post available'})
@@ -47,7 +48,8 @@ router.get('/user/:userId', protect, async(req, res) => {
 
         return res.status(200).json({count: posts.length, posts});
     } catch (e) {
-        res.status(400).json({msg: 'Error loading posts'})
+        console.error(e.message)
+        return res.status(400).json({msg: 'Error loading posts'})
     }
 });
 
@@ -97,11 +99,10 @@ router.get('/:id', protect, async (req, res, next) => {
             return res.status(400).json({msg: 'Post not found'})
         }
 
-        res.status(200).json(post)
-        next()
+        return res.status(200).json(post)
     } catch(err) {
         console.error(err.message)
-        res.status(400).json({msg: 'Post not found'})
+        return res.status(400).json({msg: 'Post not found'})
     }
 });
 
@@ -127,10 +128,10 @@ async (req, res, next) => {
     try { 
  
     const post = await Post.create(req.body)
-        res.status(201).json(post)
+        return res.status(201).json(post)
     } catch(err) {
         console.error(err.message);
-        res.status(400).json({msg: 'Error adding post'})
+        return res.status(400).json({msg: 'Error adding post'})
     }
 });
 
@@ -138,6 +139,10 @@ async (req, res, next) => {
 //@desc Update post
 //@access Private
 router.put('/:id', protect, authorize('Author', 'super_admin'), async (req, res) => {
+    const fields = {
+        title: req.body.title,
+         body: req.body.body
+     }
     try {
         let post = await Post.findById(req.params.id);
 
@@ -149,16 +154,16 @@ router.put('/:id', protect, authorize('Author', 'super_admin'), async (req, res)
         if(post.user.toString() !== req.user.id && req.user.role !== 'super_admin') {
             return res.status(400).json({msg: 'User is not authorized to update current post'})
         }
-
-        post = await Post.findByIdAndUpdate(req.params.id, req.body, {
+     
+        post = await Post.findByIdAndUpdate(req.params.id, fields, {
             new: true,
             runValidators: true
         });
 
-        res.status(200).json({post});
+        return res.status(200).json({post});
     } catch(err) {
         console.error(err.message);
-        res.status(400).json({msg: 'Error updating post'})
+        return res.status(400).json({msg: 'Error updating post'})
     }
 });
 

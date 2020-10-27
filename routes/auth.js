@@ -78,10 +78,10 @@ router.put('/update-account/:id', protect, async (req, res) => {
             new: true,
             runValidators: true
         });
-        res.status(200).json(user);
+        return res.status(200).json(user);
     } catch(err) {
-        console.error(err)
-        res.status(400).json({msg: 'Failed to update user details'})
+        console.error(err.message)
+       return res.status(400).json({msg: 'Failed to update user details'})
     }
 });
 
