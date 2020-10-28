@@ -13,11 +13,8 @@ connectDB();
 //Init Middleware
 app.use(express.json());
 
-app.use(cors({
-    origin: 'https://5f99561650c7508b9f9ce839--thirsty-curie-eed093.netlify.app'
-})
-)
-// app.use(cors())
+
+app.use(cors())
 
 //Define routes
 app.use('/api/users', require('./routes/users'));
