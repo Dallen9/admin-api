@@ -6,8 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "server": "nodemon server.js",
-    "tunnel": "ngrok http 4000",
-    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install"
+    "tunnel": "ngrok http 4000"
 
   },
   "keywords": ["heroku"],
