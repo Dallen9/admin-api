@@ -1,6 +1,7 @@
 const express = require('express');
 const connectDB = require('./config/db');
-const cors = require('cors')
+const cors = require('cors');
+const { options } = require('./routes/auth');
 require('dotenv').config()
 
 const app = express();
@@ -12,7 +13,10 @@ connectDB();
 //Init Middleware
 app.use(express.json());
 
-app.use(cors());
+app.use(cors({
+    origin: 'https://5f99561650c7508b9f9ce839--thirsty-curie-eed093.netlify.app'
+})
+)
 
 //Define routes
 app.use('/api/users', require('./routes/users'));
