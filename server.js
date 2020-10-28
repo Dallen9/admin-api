@@ -1,13 +1,10 @@
 const express = require('express');
-const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const cors = require('cors')
 
-dotenv.config({path: './config/config.env'});
-
 const app = express();
 
-//Conect database
+//Connect database
 connectDB();
 
 //Init Middleware
