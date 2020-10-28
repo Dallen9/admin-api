@@ -33,11 +33,10 @@ router.get('/', protect, async(req, res) => {
     }
 });
 
-//@route GET api/users/:userId/posts
+//@route GET api/post/user
 //@desc Get all posts by user
 //@access Private
 router.get('/user', protect, async(req, res) => {
-        // req.body.user = req.params.userId;
 
     try {
         const posts = await Post.find({user: req.user.id})
