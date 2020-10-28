@@ -15,6 +15,10 @@ app.use(express.json());
 
 app.use(cors())
 
+if(process.env.NODE_ENV === 'production') {
+    app.use(express.static('client/build'));
+}
+
 //Define routes
 app.use('/api/users', require('./routes/users'));
 app.use('/api/admin', require('./routes/admin'));
