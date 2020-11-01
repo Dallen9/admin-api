@@ -44,6 +44,26 @@ router.get('/user', protect, async(req, res) => {
         if(!posts) {
             res.status(400).json({msg: 'No post available'})
         }
+ 
+        const users = await User.findById(posts[0].user)    
+        return res.status(200).json({posts, user: users});
+    } catch (e) {
+        console.error(e.message)
+        return res.status(400).json({msg: 'Error loading posts'})
+    }
+});
+
+//@route GET api/post/user/:userId
+//@desc Get all posts by user using ID
+//@access Private
+router.get('/user/:userId', protect, async(req, res) => {
+
+    try {
+        const posts = await Post.find({user: req.params.userId})
+
+        if(!posts) {
+            res.status(400).json({msg: 'No post available'})
+        }
 
         return res.status(200).json({count: posts.length, posts});
     } catch (e) {
@@ -105,8 +125,7 @@ router.get('/:id', protect, async (req, res, next) => {
     }
 });
 
-//@route POST api/posts
-//@route POST /api/users/:UserId/posts
+//@route POST api/post
 //@desc Add new post
 //@access Private
 router.post('/', protect, authorize('Author', 'super_admin'), 

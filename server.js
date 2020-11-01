@@ -15,10 +15,6 @@ app.use(express.json());
 
 app.use(cors())
 
-// if(process.env.NODE_ENV === 'production') {
-//     app.use(express.static('client/build'));
-// }
-
 //Define routes
 app.use('/api/users', require('./routes/users'));
 app.use('/api/admin', require('./routes/admin'));
@@ -28,8 +24,9 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/auth/update-account/:id', require('./routes/auth'));
 app.use('/api/post', require('./routes/post'));
 app.use('/api/post/user/:userId', require('./routes/post'));
+app.use('/api/post/user', require('./routes/post'));
 app.use('/api/post/:id', require('./routes/post'));
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 
 app.listen(PORT, () => console.log(`Server is running on ${PORT}`));

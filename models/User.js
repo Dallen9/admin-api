@@ -27,12 +27,6 @@ const UserSchema = mongoose.Schema({
         enum: ['Subscriber', 'Author'],
         default: 'Subscriber'
     },
-    posts: [
-        {
-            type: mongoose.Schema.ObjectId, 
-            ref:'Post'
-        }
-],
     date: {
         type: String,
         default: moment().format('dddd, MMMM Do YYYY, h:mm:ss a')
