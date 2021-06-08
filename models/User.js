@@ -32,9 +32,6 @@ const UserSchema = mongoose.Schema({
         default: moment().format('dddd, MMMM Do YYYY, h:mm:ss a')
     }
 });
-// UserSchema.methods.getPublicProfile = function () {
-
-// }
 UserSchema.virtual('posts', {
     ref: 'post',
     localField: '_id',

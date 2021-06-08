@@ -1,18 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const {check, validationResult} = require('express-validator');
+const {check} = require('express-validator');
 const {protect, authorize} = require('../middleware/auth');
 
 const Post = require('../models/Post');
-// const User = require('../models/User');
 
 //@route GET api/post
 //@desc Get all post
 //@access Private
 router.get('/', protect, async(req, res) => {
     try {
-
         let post = await Post.aggregate([
             {
                 $lookup: {
@@ -38,7 +36,6 @@ router.get('/', protect, async(req, res) => {
         ])
         return res.status(200).json(post)
     } catch (e) {
-        console.error(e.message)
         return res.status(400).json({msg: 'Error loading posts'})
     }
 });
@@ -93,7 +90,6 @@ router.get('/user/:id', protect, async(req, res) => {
         }
         return res.status(200).json({count: posts.length, posts});
     } catch (e) {
-        console.error(e.message)
         return res.status(400).json({msg: 'Error loading posts'})
     }
 });
@@ -118,7 +114,6 @@ router.get('/:id', protect, async (req, res) => {
                 }, 
                 {
                     $match:  {'_id': id}
-
                 }, 
                 {
                     $project: {
@@ -132,7 +127,6 @@ router.get('/:id', protect, async (req, res) => {
             ]);
         return res.status(200).json(post)
     } catch(err) {
-        console.error(err.message)
         return res.status(400).json({msg: 'Post not found'})
     }
 });
@@ -158,7 +152,6 @@ async (req, res) => {
         await post.save()
         return res.status(201).send(post)
     } catch(err) {
-        console.error(err.message);
         return res.status(400).json({msg: 'Error adding post'})
     }
 });
@@ -190,7 +183,6 @@ router.put('/:id', protect, authorize('Author', 'super_admin'), async (req, res)
 
         return res.status(200).json({post});
     } catch(err) {
-        console.error(err.message);
         return res.status(400).json({msg: 'Error updating post'})
     }
 });
@@ -205,14 +197,11 @@ router.delete('/:id', protect, authorize('Author', 'super_admin'), async (req, r
         if(!post) {
             return res.status(400).json({msg: 'Post not found'})
         }
-
           //Make sure user is post owner
           if(post.user.toString() !== req.user.id && req.user.role !== 'super_admin') {
             return res.status(400).json({msg: 'User is not authorized to delete current post'})
         }
-
         post.remove();
-
         res.status(200).json({deleted:true, post});
     } catch(err) {
         console.error(err.message);
