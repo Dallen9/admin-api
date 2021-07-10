@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const moment = require('moment');
-const { schema } = require('./Post');
 
 const UserSchema = mongoose.Schema({
     username: {
@@ -32,4 +31,10 @@ const UserSchema = mongoose.Schema({
         default: moment().format('dddd, MMMM Do YYYY, h:mm:ss a')
     }
 });
+UserSchema.virtual('posts', {
+    ref: 'post',
+    localField: '_id',
+    foreignField: 'user'
+});
+
 module.exports = mongoose.model('user', UserSchema)

@@ -1,17 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const {check, validationResult} = require('express-validator');
+const mongoose = require('mongoose');
+const {check} = require('express-validator');
 const {protect, authorize} = require('../middleware/auth');
 
 const Post = require('../models/Post');
-const User = require('../models/User');
 
 //@route GET api/post
 //@desc Get all post
 //@access Private
 router.get('/', protect, async(req, res) => {
     try {
-
         let post = await Post.aggregate([
             {
                 $lookup: {
@@ -23,12 +22,20 @@ router.get('/', protect, async(req, res) => {
             },
             {
                 $unwind: '$user'
+            },
+            {
+                $project: 
+                {
+                    '_id': '$_id',
+                    'title': '$title',
+                    'body':  '$body',
+                    'date':  '$date',
+                    'user': { "$mergeObjects": {'_id':"$user._id", "name": '$user.name'}}
+                }
             }
         ])
-
         return res.status(200).json(post)
     } catch (e) {
-        console.error(e.message)
         return res.status(400).json({msg: 'Error loading posts'})
     }
 });
@@ -37,16 +44,9 @@ router.get('/', protect, async(req, res) => {
 //@desc Get all posts by user
 //@access Private
 router.get('/user', protect, async(req, res) => {
-
     try {
-        const posts = await Post.find({user: req.user.id})
-
-        if(!posts) {
-            res.status(400).json({msg: 'No post available'})
-        }
- 
-        const users = await User.findById(posts[0].user)    
-        return res.status(200).json({posts, user: users});
+        await req.user.populate('posts').execPopulate()
+        return res.status(200).send(req.user.posts);
     } catch (e) {
         console.error(e.message)
         return res.status(400).json({msg: 'Error loading posts'})
@@ -56,18 +56,40 @@ router.get('/user', protect, async(req, res) => {
 //@route GET api/post/user/:userId
 //@desc Get all posts by user using ID
 //@access Private
-router.get('/user/:userId', protect, async(req, res) => {
-
+router.get('/user/:id', protect, async(req, res) => {
+    let id = mongoose.Types.ObjectId(req.params.id);
     try {
-        const posts = await Post.find({user: req.params.userId})
+            const posts = await Post.aggregate([
+                 {
+                    $lookup: {
+                        from: 'users',
+                        localField: 'user',
+                        foreignField: '_id',
+                        as: 'userDetails'
+                    }
+                },
+                {
+                    $unwind: '$userDetails'
+                }, 
+                {
+                    $match:  {'user': id}
 
+                }, 
+                {
+                    $project: {
+                    '_id': '$_id',
+                    'title': '$title',
+                    'body':  '$body',
+                    'date':  '$date',
+                    'user': { "$mergeObjects": {'_id':"$user", "name": '$userDetails.name', 'username': '$userDetails.username'}}
+                    }
+                }
+            ]);
         if(!posts) {
             res.status(400).json({msg: 'No post available'})
         }
-
         return res.status(200).json({count: posts.length, posts});
     } catch (e) {
-        console.error(e.message)
         return res.status(400).json({msg: 'Error loading posts'})
     }
 });
@@ -75,52 +97,36 @@ router.get('/user/:userId', protect, async(req, res) => {
 //@route GET api/posts/:id
 //@desc Get single post
 //@access Private
-router.get('/:id', protect, async (req, res, next) => {
-    // req.body.user = req.params.id;
-
+router.get('/:id', protect, async (req, res) => {
+    let id = mongoose.Types.ObjectId(req.params.id);
     try {
-        const post = await Post.findById(req.params.id);
-        // let post = await Post.aggregate([
-         
-        //     {
-        //         $lookup: {
-        //             from: 'users',
-        //             localField: 'user',
-        //             foreignField: '_id',
-        //             as: 'user'
-        //         }
-        //     },
-        //     {
-        //         $unwind: '$user'
-        //     },
-        //     {
-        //         $match: {
-        //             id: req.params.id
-        //         }
-        //     },
-        //     {
-        //         $limit: 1
-        //     }
-        // ])
-            // {
-            //     $project: {
-            //        ' _id': 0,
-            //        'user._id': 0,
-            //         'user.title': 0,
-            //         'user.body': 0,
-            //     }
-            // },
-           
-            
-      
-
-        if(!post) {
-            return res.status(400).json({msg: 'Post not found'})
-        }
-
+            const post = await Post.aggregate([
+                 {
+                    $lookup: {
+                        from: 'users',
+                        localField: 'user',
+                        foreignField: '_id',
+                        as: 'userDetails'
+                    }
+                },
+                {
+                    $unwind: '$userDetails'
+                }, 
+                {
+                    $match:  {'_id': id}
+                }, 
+                {
+                    $project: {
+                    '_id': '$_id',
+                    'title': '$title',
+                    'body':  '$body',
+                    'date':  '$date',
+                    'user': { "$mergeObjects": {'_id':"$user", "name": '$userDetails.name', 'username': '$userDetails.username'}}
+                    }
+                }
+            ]);
         return res.status(200).json(post)
     } catch(err) {
-        console.error(err.message)
         return res.status(400).json({msg: 'Post not found'})
     }
 });
@@ -137,18 +143,15 @@ router.post('/', protect, authorize('Author', 'super_admin'),
         .not()
         .isEmpty()
     ],
-async (req, res, next) => {
-    
-    // //Add user to req.body
-    req.body.user = req.user.id;
-    req.body.post = req.params.postId;
-
+async (req, res) => {
+    const post = new Post({
+        ...req.body,
+    user: req.user._id
+})
     try { 
- 
-    const post = await Post.create(req.body)
-        return res.status(201).json(post)
+        await post.save()
+        return res.status(201).send(post)
     } catch(err) {
-        console.error(err.message);
         return res.status(400).json({msg: 'Error adding post'})
     }
 });
@@ -180,7 +183,6 @@ router.put('/:id', protect, authorize('Author', 'super_admin'), async (req, res)
 
         return res.status(200).json({post});
     } catch(err) {
-        console.error(err.message);
         return res.status(400).json({msg: 'Error updating post'})
     }
 });
@@ -195,14 +197,11 @@ router.delete('/:id', protect, authorize('Author', 'super_admin'), async (req, r
         if(!post) {
             return res.status(400).json({msg: 'Post not found'})
         }
-
           //Make sure user is post owner
           if(post.user.toString() !== req.user.id && req.user.role !== 'super_admin') {
             return res.status(400).json({msg: 'User is not authorized to delete current post'})
         }
-
         post.remove();
-
         res.status(200).json({deleted:true, post});
     } catch(err) {
         console.error(err.message);
